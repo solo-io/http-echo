@@ -1,3 +1,8 @@
+# updated to make for solo-io
+# make linux/arm64 -- based off the architecture you want to build
+# make docker-build/alpine
+# get the tag name and push it
+# then push the image to gcr.io/solo-test-236622/http-echo
 # Metadata about this makefile and position
 MKFILE_PATH := $(lastword $(MAKEFILE_LIST))
 CURRENT_DIR := $(patsubst %/,%,$(dir $(realpath $(MKFILE_PATH))))
@@ -17,7 +22,7 @@ GOMAXPROCS ?= 4
 # Get the project metadata
 GOVERSION := 1.17
 PROJECT := $(CURRENT_DIR:$(GOPATH)/src/%=%)
-OWNER := $(notdir $(patsubst %/,%,$(dir $(PROJECT))))
+OWNER := soloio
 NAME := $(notdir $(PROJECT))
 GIT_COMMIT ?= $(shell git rev-parse --short HEAD)
 VERSION := $(shell awk -F\" '/Version/ { print $$2; exit }' "${CURRENT_DIR}/version/version.go")
@@ -134,7 +139,7 @@ endif
 define make-docker-target
   docker-build/$1:
 		@echo "==> Building ${1} Docker container for ${PROJECT}"
-		@docker build \
+		docker build \
 			--rm \
 			--force-rm \
 			--no-cache \
@@ -142,6 +147,7 @@ define make-docker-target
 			--file="docker/${1}/Dockerfile" \
 			--build-arg="LD_FLAGS=${LD_FLAGS}" \
 			--build-arg="GOTAGS=${GOTAGS}" \
+			--build-arg="ARCH=${GOARCH}" \
 			$(if $(filter $1,scratch),--tag="${OWNER}/${NAME}",) \
 			--tag="${OWNER}/${NAME}:${1}" \
 			--tag="${OWNER}/${NAME}:${VERSION}-${1}" \
